@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Focus Ledger",
+  "description": "A quiet mirror for your attention. Privacy-first and local-only.",
+  "version": "0.1.0",
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+  "background": {
+    "service_worker": "background/serviceWorker.js"
+  },
+  "permissions": ["tabs", "idle", "storage", "alarms"],
+  "host_permissions": ["<all_urls>"]
+}
