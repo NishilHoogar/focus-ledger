@@ -47,9 +47,9 @@ h2 {
 }
 
 .bar-active {
-  background-color: #4caf50; /* green */
+  background-color: #2196f3; /* green */
 }
 
 .bar-passive {
-  background-color: #ff9800; /* orange */
+  background-color: #ffc107; /* orange */
 }

@@ -1,6 +1,13 @@
 const list = document.getElementById("list");
 const today = new Date().toISOString().slice(0, 10);
 
+// 🔹 Open Dashboard button (REGISTER ONCE)
+document.getElementById("openDashboard").addEventListener("click", () => {
+  chrome.tabs.create({
+    url: chrome.runtime.getURL("dashboard/dashboard.html")
+  });
+});
+
 chrome.storage.local.get([today], (result) => {
   const dayData = result[today];
 
@@ -28,32 +35,30 @@ chrome.storage.local.get([today], (result) => {
     const activeMin = (activeMs / 60000).toFixed(2);
     const passiveMin = (passiveMs / 60000).toFixed(2);
 
-    // Calculate bar widths
     const activeWidth = ((activeMs / totalMs) * 100).toFixed(1);
     const passiveWidth = ((passiveMs / totalMs) * 100).toFixed(1);
 
     const row = document.createElement("div");
     row.className = "item";
-    
-    // Security: Build DOM elements safely to prevent XSS
+
     const domainSpan = document.createElement("span");
     domainSpan.textContent = domain;
-    
+
     const statsSmall = document.createElement("small");
     statsSmall.textContent = `Active: ${activeMin} min | Passive: ${passiveMin} min`;
-    
+
     const barContainer = document.createElement("div");
     barContainer.className = "bar-container";
     barContainer.innerHTML = `
-      <div class="bar-active" style="width:${activeWidth}%;"></div>
-      <div class="bar-passive" style="width:${passiveWidth}%;"></div>
+      <div class="bar-active" style="width:${activeWidth}%"></div>
+      <div class="bar-passive" style="width:${passiveWidth}%"></div>
     `;
 
     row.appendChild(domainSpan);
     row.appendChild(document.createElement("br"));
     row.appendChild(statsSmall);
     row.appendChild(barContainer);
-    
+
     list.appendChild(row);
   });
 });
