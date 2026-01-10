@@ -4,8 +4,21 @@
   "description": "A quiet mirror for your attention. Privacy-first and local-only.",
   "version": "0.1.0",
 
+  "icons": {
+    "16": "icons/favicon.png",
+    "32": "icons/favicon.png",
+    "48": "icons/favicon.png",
+    "128": "icons/favicon.png"
+  },
+
   "action": {
-    "default_popup": "popup/popup.html"
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/favicon.png",
+      "32": "icons/favicon.png",
+      "48": "icons/favicon.png",
+      "128": "icons/favicon.png"
+    }
   },
 
   "background": {

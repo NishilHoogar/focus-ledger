@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   const dateSelector = document.getElementById("dateSelector");
+  const exportBtn = document.getElementById("exportBtn");
   
   // Initial Load
   loadDashboard("today");
@@ -7,6 +8,19 @@ document.addEventListener("DOMContentLoaded", () => {
   dateSelector.addEventListener("change", (e) => {
     loadDashboard(e.target.value);
   });
+
+  if (exportBtn) {
+    exportBtn.addEventListener("click", exportToCSV);
+  }
+
+  const clearBtn = document.getElementById("clearBtn");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      if (confirm("Are you sure you want to delete all recorded data? This cannot be undone.")) {
+        chrome.storage.local.clear(() => location.reload());
+      }
+    });
+  }
 });
 
 function loadDashboard(range) {
@@ -126,7 +140,10 @@ function render(data, trendData) {
     const row = document.createElement("div");
     row.className = "row";
     row.innerHTML = `
-      <div class="domain" title="${d.domain}">${d.domain}</div>
+      <div class="domain" title="${d.domain}">
+        <img src="https://www.google.com/s2/favicons?domain=${d.domain}&sz=32" alt="">
+        ${d.domain}
+      </div>
       <div class="bar-track">
         <div class="bar-active" style="width: ${activePct}%"></div>
         <div class="bar-passive" style="width: ${passivePct}%"></div>
@@ -200,9 +217,9 @@ function drawDonutChart(domains) {
   
   const width = rect.width;
   const height = rect.height;
-  const radius = Math.min(width, height) / 2 - 20;
-  const centerX = width / 2;
+  const centerX = width * 0.35;
   const centerY = height / 2;
+  const radius = Math.min(centerX, height / 2) - 15;
 
   ctx.clearRect(0, 0, width, height);
 
@@ -486,7 +503,7 @@ function renderLegend(container, data, palette, otherColor) {
     fontSize: '11px',
     boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
     pointerEvents: 'none',
-    maxWidth: '120px'
+    maxWidth: '100px'
   });
 
   data.forEach((d, i) => {
@@ -537,4 +554,38 @@ function showTooltip(x, y, html) {
 
 function hideTooltip() {
   if (tooltipEl) tooltipEl.style.display = 'none';
+}
+
+function exportToCSV() {
+  chrome.storage.local.get(null, (items) => {
+    // CSV Header
+    let csvContent = "Date,Domain,Active Minutes,Passive Minutes,Total Minutes\n";
+
+    // Filter for keys that look like dates (YYYY-MM-DD) and sort descending
+    const dateKeys = Object.keys(items)
+      .filter(key => /^\d{4}-\d{2}-\d{2}$/.test(key))
+      .sort()
+      .reverse();
+
+    dateKeys.forEach(date => {
+      const dayData = items[date];
+      Object.entries(dayData).forEach(([domain, stats]) => {
+        const activeMin = ((stats.activeMs || 0) / 60000).toFixed(2);
+        const passiveMin = ((stats.passiveMs || 0) / 60000).toFixed(2);
+        const totalMin = (((stats.activeMs || 0) + (stats.passiveMs || 0)) / 60000).toFixed(2);
+        
+        csvContent += `${date},${domain},${activeMin},${passiveMin},${totalMin}\n`;
+      });
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    const nowStr = new Date().toISOString().slice(0, 10);
+    link.setAttribute("download", `focus_ledger_export_${nowStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
 }
