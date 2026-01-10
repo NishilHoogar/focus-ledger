@@ -12,7 +12,7 @@ chrome.storage.local.get([today], (result) => {
   const dayData = result[today];
 
   if (!dayData) {
-    list.textContent = "No data yet.";
+    list.innerHTML = '<div class="empty-state">No activity recorded today.</div>';
     return;
   }
 
@@ -32,21 +32,31 @@ chrome.storage.local.get([today], (result) => {
 
     if (totalMs === 0) return;
 
-    const activeMin = (activeMs / 60000).toFixed(2);
-    const passiveMin = (passiveMs / 60000).toFixed(2);
-
     const activeWidth = ((activeMs / totalMs) * 100).toFixed(1);
     const passiveWidth = ((passiveMs / totalMs) * 100).toFixed(1);
 
     const row = document.createElement("div");
     row.className = "item";
 
-    const domainSpan = document.createElement("span");
-    domainSpan.textContent = domain;
+    // 1. Header Row (Icon + Domain + Time)
+    const header = document.createElement("div");
+    header.className = "item-header";
 
-    const statsSmall = document.createElement("small");
-    statsSmall.textContent = `Active: ${activeMin} min | Passive: ${passiveMin} min`;
+    const domainGroup = document.createElement("div");
+    domainGroup.className = "domain-group";
+    domainGroup.innerHTML = `
+      <img src="https://www.google.com/s2/favicons?domain=${domain}&sz=32" alt="">
+      <span class="domain-name" title="${domain}">${domain}</span>
+    `;
 
+    const timeStat = document.createElement("div");
+    timeStat.className = "time-stat";
+    timeStat.textContent = formatTime(totalMs);
+
+    header.appendChild(domainGroup);
+    header.appendChild(timeStat);
+
+    // 2. Bar Row
     const barContainer = document.createElement("div");
     barContainer.className = "bar-container";
     barContainer.innerHTML = `
@@ -54,11 +64,17 @@ chrome.storage.local.get([today], (result) => {
       <div class="bar-passive" style="width:${passiveWidth}%"></div>
     `;
 
-    row.appendChild(domainSpan);
-    row.appendChild(document.createElement("br"));
-    row.appendChild(statsSmall);
+    row.appendChild(header);
     row.appendChild(barContainer);
 
     list.appendChild(row);
   });
 });
+
+function formatTime(ms) {
+  const m = Math.floor(ms / 60000);
+  const h = Math.floor(m / 60);
+  const mins = m % 60;
+  if (h > 0) return `${h}h ${mins}m`;
+  return `${mins}m`;
+}

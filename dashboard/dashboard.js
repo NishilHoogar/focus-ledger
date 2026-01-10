@@ -1,63 +1,164 @@
 document.addEventListener("DOMContentLoaded", () => {
   const dateSelector = document.getElementById("dateSelector");
   const exportBtn = document.getElementById("exportBtn");
+  const calendarBtn = document.getElementById("calendarBtn");
+  const presetControls = document.getElementById("presetControls");
+  const customControls = document.getElementById("customControls");
+  const applyCustom = document.getElementById("applyCustom");
+  const cancelCustom = document.getElementById("cancelCustom");
   
   // Initial Load
-  loadDashboard("today");
+  initializeDateSelector();
 
   dateSelector.addEventListener("change", (e) => {
     loadDashboard(e.target.value);
   });
+
+  // Toggle Custom Date Picker
+  if (calendarBtn) {
+    calendarBtn.addEventListener("click", () => {
+      presetControls.style.display = "none";
+      customControls.style.display = "flex";
+      // Default to today
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById("startDate").value = today;
+      document.getElementById("endDate").value = today;
+    });
+  }
+
+  if (cancelCustom) {
+    cancelCustom.addEventListener("click", () => {
+      customControls.style.display = "none";
+      presetControls.style.display = "flex";
+    });
+  }
+
+  if (applyCustom) {
+    applyCustom.addEventListener("click", () => {
+      const start = document.getElementById("startDate").value;
+      const end = document.getElementById("endDate").value;
+      if (start && end) loadDashboard("custom", start, end);
+    });
+  }
 
   if (exportBtn) {
     exportBtn.addEventListener("click", exportToCSV);
   }
 
   const clearBtn = document.getElementById("clearBtn");
+  const modal = document.getElementById("resetModal");
+  const cancelBtn = document.getElementById("cancelReset");
+  const confirmBtn = document.getElementById("confirmReset");
+
   if (clearBtn) {
     clearBtn.addEventListener("click", () => {
-      if (confirm("Are you sure you want to delete all recorded data? This cannot be undone.")) {
-        chrome.storage.local.clear(() => location.reload());
-      }
+      modal.style.display = "flex";
     });
   }
+
+  if (cancelBtn) cancelBtn.addEventListener("click", () => modal.style.display = "none");
+  
+  if (confirmBtn) confirmBtn.addEventListener("click", () => {
+    chrome.storage.local.clear(() => location.reload());
+  });
+
+  // Close modal when clicking outside
+  if (modal) modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.style.display = "none";
+  });
 });
 
-function loadDashboard(range) {
-  if (range === "week") {
-    loadWeeklyData();
-    return;
-  }
+function initializeDateSelector() {
+  const dateSelector = document.getElementById("dateSelector");
+  const today = new Date().toISOString().slice(0, 10);
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-  const dateObj = new Date();
-  if (range === "yesterday") {
-    dateObj.setDate(dateObj.getDate() - 1);
-  }
-  
-  const dateKey = dateObj.toISOString().slice(0, 10);
-  const displayDate = dateObj.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
-  
-  document.getElementById("dateDisplay").textContent = displayDate;
+  chrome.storage.local.get(null, (items) => {
+    const keys = Object.keys(items).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
+    // Check if there is any date strictly less than today
+    const hasHistory = keys.some(k => k < today);
+    // Check if there is history older than 7 days
+    const hasOldHistory = keys.some(k => k < sevenDaysAgo);
 
-  chrome.storage.local.get([dateKey], (result) => {
-    const data = result[dateKey] || {};
-    render(data, null); // null indicates no trend data for single day view
+    dateSelector.innerHTML = "";
+
+    // Always add Today
+    const optToday = document.createElement("option");
+    optToday.value = "today";
+    optToday.textContent = "Today";
+    dateSelector.appendChild(optToday);
+
+    if (hasHistory) {
+      const optYesterday = document.createElement("option");
+      optYesterday.value = "yesterday";
+      optYesterday.textContent = "Yesterday";
+      dateSelector.appendChild(optYesterday);
+
+      const optWeek = document.createElement("option");
+      optWeek.value = "week";
+      optWeek.textContent = "Last 7 Days";
+      dateSelector.appendChild(optWeek);
+
+      if (hasOldHistory) {
+        const optMonth = document.createElement("option");
+        optMonth.value = "month";
+        optMonth.textContent = "Last 30 Days";
+        dateSelector.appendChild(optMonth);
+      }
+    }
+
+    loadDashboard("today");
   });
 }
 
-function loadWeeklyData() {
-  const keys = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    keys.push(d.toISOString().slice(0, 10));
+function loadDashboard(range, customStart, customEnd) {
+  let start = new Date();
+  let end = new Date();
+  let label = "";
+
+  if (range === "today") {
+    label = start.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+  } else if (range === "yesterday") {
+    start.setDate(start.getDate() - 1);
+    end.setDate(end.getDate() - 1);
+    label = start.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+  } else if (range === "week") {
+    start.setDate(start.getDate() - 6); // 7 days inclusive
+    label = "Last 7 Days";
+  } else if (range === "month") {
+    start.setDate(start.getDate() - 29); // 30 days inclusive
+    label = "Last 30 Days";
+  } else if (range === "custom") {
+    start = new Date(customStart);
+    end = new Date(customEnd);
+    if (customStart === customEnd) {
+      label = start.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    } else {
+      label = `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
+    }
   }
 
-  document.getElementById("dateDisplay").textContent = "Last 7 Days";
+  document.getElementById("dateDisplay").textContent = label;
+  loadDateRange(start, end);
+}
+
+function loadDateRange(startDate, endDate) {
+  const keys = [];
+  const dt = new Date(startDate);
+  const endDt = new Date(endDate);
+  
+  // Generate all date keys in range
+  while (dt <= endDt) {
+    keys.push(dt.toISOString().slice(0, 10));
+    dt.setDate(dt.getDate() + 1);
+  }
 
   chrome.storage.local.get(keys, (result) => {
     const aggregated = {};
     const trendData = [];
+    
+    // Determine if single day view (for Gauge vs Trend chart)
+    const isSingleDay = keys.length === 1;
 
     // Process data for both aggregation and trend chart
     keys.forEach(key => {
@@ -82,8 +183,8 @@ function loadWeeklyData() {
       trendData.push(dayStats);
     });
 
-    // Reverse trendData so it goes from Oldest -> Newest
-    render(aggregated, trendData.reverse());
+    // Render (pass null for trendData if single day to trigger Gauge view)
+    render(aggregated, isSingleDay ? null : trendData);
   });
 }
 
@@ -118,15 +219,15 @@ function render(data, trendData) {
   // Render Breakdown
   const container = document.getElementById("breakdown");
   container.innerHTML = "";
-  const chartsContainer = document.querySelector('.charts-container');
+  const chartsWrapper = document.querySelector('.charts-wrapper');
 
   if (domains.length === 0) {
-    container.innerHTML = '<div style="padding:20px; text-align:center; color:#888;">No activity recorded for this period.</div>';
-    if (chartsContainer) chartsContainer.style.display = 'none';
+    container.innerHTML = '<div style="padding:40px; text-align:center; color:#888; font-size: 1.1em;">No activity recorded for this period.</div>';
+    if (chartsWrapper) chartsWrapper.style.display = 'none';
     return;
   }
 
-  if (chartsContainer) chartsContainer.style.display = 'flex';
+  if (chartsWrapper) chartsWrapper.style.display = 'flex';
 
   // Render Charts
   renderCharts(domains, trendData);

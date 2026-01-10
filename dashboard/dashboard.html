@@ -5,6 +5,36 @@
   <title>Focus Ledger Dashboard</title>
   <link rel="stylesheet" href="dashboard.css" />
   <link rel="icon" href="../icons/favicon.png" />
+  <style>
+    /* Custom Modal Styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-box {
+      background: #fff;
+      padding: 24px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 350px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #333; }
+    .modal-desc { font-size: 14px; color: #666; margin-bottom: 20px; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 10px; justify-content: center; }
+    .btn-modal { flex: 1; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; }
+    .btn-cancel { background: #f5f5f5; color: #333; }
+    .btn-cancel:hover { background: #e0e0e0; }
+    .btn-confirm { background: #d32f2f; color: white; }
+    .btn-confirm:hover { background: #b71c1c; }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -14,14 +44,26 @@
         <img src="../icons/logo1.png" alt="Focus Ledger Logo" class="logo-large">
       </div>
       <div class="controls">
-        <select id="dateSelector">
-          <option value="today">Today</option>
-          <option value="yesterday">Yesterday</option>
-          <option value="week">Last 7 Days</option>
-        </select>
+        <!-- Standard Selector -->
+        <div id="presetControls" class="control-group">
+          <select id="dateSelector">
+            <!-- Options populated dynamically -->
+          </select>
+          <button id="calendarBtn" class="btn-icon" title="Select Custom Date Range">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          </button>
+        </div>
+
+        <!-- Custom Date Picker (Hidden by default) -->
+        <div id="customControls" class="control-group" style="display:none;">
+          <input type="date" id="startDate" class="date-input">
+          <span class="date-sep">to</span>
+          <input type="date" id="endDate" class="date-input">
+          <button id="applyCustom" class="btn-icon btn-check" title="Apply">✓</button>
+          <button id="cancelCustom" class="btn-icon btn-cancel" title="Cancel">✕</button>
+        </div>
+
         <span id="dateDisplay"></span>
-        <button id="exportBtn" class="btn-export">Export to CSV</button>
-        <button id="clearBtn" class="btn-export" style="background: #fff; color: #d32f2f; border: 1px solid #d32f2f; margin-left: 5px;">Reset</button>
       </div>
     </header>
 
@@ -49,9 +91,43 @@
       </div>
     </div>
 
+    <!-- Action Buttons -->
+    <div class="dashboard-actions">
+      <button id="exportBtn" class="btn btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Export CSV
+      </button>
+      <button id="clearBtn" class="btn btn-danger">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+        Reset Data
+      </button>
+    </div>
+
     <!-- 3. Detailed Breakdown -->
     <div id="breakdown"></div>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+      <p class="footer-note">Focus Ledger &bull; Local & Private</p>
+    </footer>
   </div>
+
+  <!-- Custom Reset Confirmation Modal -->
+  <div id="resetModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-title">Reset Data?</div>
+      <p class="modal-desc">Are you sure you want to delete all recorded data? This cannot be undone.</p>
+      <div class="modal-actions">
+        <button id="cancelReset" class="btn-modal btn-cancel">Cancel</button>
+        <button id="confirmReset" class="btn-modal btn-confirm">Delete</button>
+      </div>
+    </div>
+  </div>
+
   <script src="dashboard.js"></script>
 </body>
 </html>
