@@ -30,7 +30,9 @@ Every website is measured in two dimensions:
 
 This reveals whether a site was productive focus or idle consumption.
 
-### Daily Popup
+### Daily Popup 
+
+<img width="432" height="340" alt="image" src="https://github.com/user-attachments/assets/298471e1-b465-43fd-8037-b95030efc833" />
 
 The popup gives you an instant snapshot:
 
@@ -38,7 +40,10 @@ The popup gives you an instant snapshot:
 - Color-coded bars for Active vs Passive
 - Precise minutes per site
 
-### Analytics Dashboard
+### Analytics Dashboard 
+
+<img width="1895" height="1026" alt="image" src="https://github.com/user-attachments/assets/b641350f-b9ec-49ad-8732-b3082eaf93b1" />
+
 
 Your full attention command center.
 
