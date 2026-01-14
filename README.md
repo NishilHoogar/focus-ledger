@@ -1,4 +1,5 @@
 # Focus Ledger
+<img width="931" height="265" alt="logo1" src="https://github.com/user-attachments/assets/ea6b740a-369a-457b-a115-e22399490c45" />
 
 A quiet mirror for your attention.
 
